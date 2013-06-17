@@ -1,7 +1,7 @@
 -- Applescript to collect and display hardware and configuration info
 -- by Daniel Moore
--- Version 1.0.30
--- June 16, 2013
+-- Version 1.0.31
+-- June 17, 2013
 
 -- This script displays a column of items on the left with their corresponding info on the
 -- right. For many items the info is nothing more than "OK."
@@ -64,7 +64,7 @@ set help_desk_text to help_desk_info
 set computer_name to get computer name of (get system info)
 try
 	set asset_tag to do shell script "/usr/bin/defaults read /Library/Preferences/com.apple.RemoteDesktop Text1"
-	if asset_tag as integer is less than 20000000 or asset_tag as integer is greater than 100000000 then
+	if asset_tag is equal to "" then
 		set asset_tag to "?"
 	end if
 on error
@@ -176,14 +176,18 @@ end try
 if os_version begins with "10.4" then
 	set munki_software to "N/A"
 else
-	set munki_code_ok to do shell script "du -d 0 /usr/local/munki 2>/dev/null | /usr/bin/awk '{ print $1 }'"
-	set munki_launch_agents_ok to do shell script "ls /Library/LaunchAgents | /usr/bin/grep -c munki"
-	set munki_launch_daemons_ok to do shell script "ls /Library/LaunchDaemons | /usr/bin/grep -c munki"
-	if munki_code_ok as integer is greater than 1500 and munki_launch_agents_ok as integer is equal to 4 and munki_launch_daemons_ok as integer is equal to 4 then
-		set munki_software to "OK"
-	else
+	try
+		set munki_code_ok to do shell script "du -d 0 /usr/local/munki 2>/dev/null | /usr/bin/awk '{ print $1 }'"
+		set munki_launch_agents_ok to do shell script "ls /Library/LaunchAgents | /usr/bin/grep -c munki"
+		set munki_launch_daemons_ok to do shell script "ls /Library/LaunchDaemons | /usr/bin/grep -c munki"
+		if munki_code_ok as integer is greater than 1500 and munki_launch_agents_ok as integer is equal to 4 and munki_launch_daemons_ok as integer is equal to 4 then
+			set munki_software to "OK"
+		else
+			set munki_software to not_ok_text
+		end if
+	on error
 		set munki_software to not_ok_text
-	end if
+	end try
 end if
 
 try
